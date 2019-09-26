@@ -148,3 +148,16 @@ weather_plot = ggplot(weather_df, aes(x = tmin, y = tmax)) +
 
 ggsave("weather_plot.pdf", weather_plot, width = 8, height = 5)
 ```
+
+Hwo the figure will appear in the document
+```{r fig.width = 6}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) +
+  geom_smooth(se = FALSE) 
+```
+
+```{r fig.width = 12}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) +
+  geom_smooth(se = FALSE) 
+```

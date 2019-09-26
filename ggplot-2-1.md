@@ -288,3 +288,33 @@ ggsave("weather_plot.pdf", weather_plot, width = 8, height = 5)
 ```
 
     ## Warning: Removed 15 rows containing missing values (geom_point).
+
+Hwo the figure will appear in the document
+
+``` r
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) +
+  geom_smooth(se = FALSE) 
+```
+
+    ## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+
+    ## Warning: Removed 15 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+![](ggplot-2-1_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) +
+  geom_smooth(se = FALSE) 
+```
+
+    ## `geom_smooth()` using method = 'gam' and formula 'y ~ s(x, bs = "cs")'
+
+    ## Warning: Removed 15 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+![](ggplot-2-1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->

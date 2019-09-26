@@ -1,0 +1,14 @@
+---
+title: "ggplot2-1"
+author: "Yuning Wang"
+date: "9/26/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggridges)
+```
+

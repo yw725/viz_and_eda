@@ -1,0 +1,247 @@
+---
+title: "ggplot2-2"
+author: "Yuning Wang"
+date: "10/1/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggridges)
+library(patchwork)
+```
+
+```{r load data, cache=TRUE}
+weather_df = 
+  rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2017-01-01",
+                      date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+weather_df
+```
+
+## Making new plots
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5)
+```
+
+add labels :
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5)+
+  labs(
+    title = "Temperature plot",
+    x = "Minimum Temp (C)",
+    y = "Maximum temp (C)",
+    caption = "Data from the rnoaa package"
+  )
+```
+
+x axis tick marks:
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5)+
+  labs(
+    title = "Temperature plot",
+    x = "Minimum Temp (C)",
+    y = "Maximum temp (C)",
+    caption = "Data from the rnoaa package"
+  ) +
+  scale_x_continuous(
+    breaks = c(-15, 0, 15), 
+    labels = c("-15º C", "0", "15")) +
+  scale_y_continuous(
+    trans = "sqrt", 
+    position = "right"
+  )
+```
+
+## Change the color
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package") +
+  scale_color_hue(
+    name = "Location",
+    h = c(100, 200)
+  )
+```
+
+the viridis package
+```{r}
+ggp_base = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "Location", 
+    discrete = TRUE
+  )
+
+ggp_base
+```
+
+## Themes
+```{r}
+ggp_base +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+ggp_base +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## More than one dataset
+```{r}
+central_park = 
+  weather_df %>%
+  filter(name == "CentralPark_NY")
+
+waikiki = 
+  weather_df %>%
+  filter(name == "Waikiki_HA")
+
+ggplot(data = waikiki, aes(x = date, y = tmax,
+                           color = name)) +
+  geom_point() +
+  geom_line(data = central_park)
+```
+
+brief aside about colors
+
+```{r}
+waikiki %>%
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point()
+
+waikiki %>%
+  ggplot(aes(x = date, y = tmax), color = red) +
+  geom_point()
+
+```
+
+## Multi-panel plots
+
+```{r}
+ggp_scatter = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+ggp_density = 
+  weather_df %>%
+  ggplot(aes(x = tmin)) +
+  geom_density()
+
+ggp_box = 
+  weather_df %>%
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot()
+
+(ggp_scatter + ggp_box )/ ggp_density
+```
+
+## Data manipulation
+
+```{r}
+weather_df %>%
+  mutate(
+    name = factor(name),
+    name = fct_relevel(name, "Waikiki_HA",
+                       "CentralPark, NY")
+  ) %>%
+  ggplot(aes(x = name, y = tmax, color = name)) +
+  geom_boxplot()
+
+weather_df %>%
+  mutate(
+    name = factor(name),
+    name = fct_reorder(name, tmax)
+  ) %>%
+  ggplot(aes(x = name, y = tmax, color = name)) +
+  geom_boxplot()
+
+weather_df %>%
+  mutate(name = forcats::fct_relevel(name, c("Waikiki_HA", "CentralPark_NY", "Waterhole_WA"))) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+
+## Restructure then plot
+
+```{r}
+weather_df %>%
+  select(name, tmax, tmin) %>% 
+  pivot_longer(
+    tmax:tmin,
+    names_to = "observation", 
+    values_to = "temp") %>% 
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) + 
+  facet_grid(~name) + 
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+
+Example
+
+```{r}
+pup_data = 
+  read_csv("./data/FAS_pups.csv", col_types = "ciiiii") %>%
+  janitor::clean_names() %>%
+  mutate(sex = recode(sex, `1` = "male", `2` = "female")) 
+
+litter_data = 
+  read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+  janitor::clean_names() %>%
+  select(-pups_survive) %>%
+  separate(group, into = c("dose", "day_of_tx"), sep = 3) %>%
+  mutate(wt_gain = gd18_weight - gd0_weight,
+         day_of_tx = as.numeric(day_of_tx))
+
+fas_data = left_join(pup_data, litter_data, by = "litter_number") 
+
+fas_data %>% 
+  select(sex, dose, day_of_tx, pd_ears:pd_walk) %>% 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome", 
+    values_to = "pn_day") %>% 
+  drop_na() %>% 
+  mutate(outcome = forcats::fct_reorder(outcome, day_of_tx, median)) %>% 
+  ggplot(aes(x = dose, y = pn_day)) + 
+  geom_violin() + 
+  facet_grid(day_of_tx ~ outcome)
+```
+
+

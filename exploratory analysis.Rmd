@@ -39,3 +39,154 @@ weather_df =
   select(name, id, date, month, everything())
 ```
 
+
+## 'group_by' function and counting
+
+```{r}
+weather_df %>%
+  group_by(name, month)
+```
+
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  summarize(n_obs = n())
+
+weather_df %>%
+  group_by(month, name) %>%
+  summarize(n_obs = n())
+
+weather_df %>%
+  group_by(month) %>%
+  summarize(
+    n_obs = n(),
+    n_unique = n_distinct(date))
+```
+
+```{r}
+# can count things don't use group_by and summarize
+weather_df %>% 
+  count(name)
+```
+
+
+(make a nice table)
+
+```{r}
+weather_df %>% 
+  count(name) %>% 
+  knitr::kable()
+```
+
+
+## (2*2) tables
+
+a digression
+
+```{r}
+weather_df %>% 
+  filter(name != "Waikiki_HA") %>% 
+  mutate(
+    cold = case_when(
+      tmax < 5  ~ "cold",
+      tmax >= 5 ~ "not cold",
+      TRUE      ~ ""
+    )
+  ) %>% 
+  group_by(name, cold) %>% 
+  count() %>% 
+  pivot_wider(
+    names_from = cold,
+    values_from = n
+  )
+
+
+
+weather_df %>% 
+  filter(name != "Waikiki_HA") %>% 
+  mutate(
+    cold = case_when(
+      tmax < 5  ~ "cold",
+      tmax >= 5 ~ "not cold",
+      TRUE      ~ ""
+    )
+  ) %>% 
+  janitor::tabyl(name, cold)
+```
+
+
+
+## general summaries
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(
+    n = n(),
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    sd_tmax = sd(tmax, na.rm = TRUE),
+    median_prcp = median(prcp, na.rm = TRUE)
+  ) %>% 
+  ggplot(aes(x = month, y = mean_tmax, color = name)) + 
+  geom_point() + geom_line() + 
+    theme(legend.position = "bottom")
+```
+
+```{r}
+# A check on missing values
+weather_df %>% 
+  filter(is.na(tmax))
+```
+
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  ungroup()
+```
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax
+  ) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+window functions in grouped mutates ....
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  mutate(
+    temp_ranking = min_rank(tmax)
+  )
+
+weather_df %>%
+  group_by(name, month) %>%
+  filter(min_rank(tmax) < 2)
+```
+
+
+leg and leading
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(
+    lagged_tmax = lag(tmax),
+    one_day_tmax_change = tmax - lagged_tmax) %>% 
+  summarize(sd_daily_change = sd(one_day_tmax_change, na.rm = T))
+```
+
+
+
+
+
+
+
+
+
